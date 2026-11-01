@@ -26,7 +26,7 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit import Chem, RDLogger
 from .data import load_dataset, TASK_COL_MAP
-from utils import LiteLLMModel, HuggingFaceModel
+from utils import LiteLLMModel, HuggingFaceModel , extract_json_answer
 
 RDLogger.DisableLog("rdApp.*")  # silence RDKit parse warnings for invalid SMILES
 
@@ -59,14 +59,11 @@ def _parse_prediction(raw_text, task_name):
         return ""
 
     text = raw_text.strip()
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                return str(data["answer"]).strip()
-    except Exception:
-        pass
+
+    ans = extract_json_answer(text, key="answer")
+
+    if ans:
+        return ans.strip()
 
     _, to_col = TASK_COL_MAP[task_name]
 

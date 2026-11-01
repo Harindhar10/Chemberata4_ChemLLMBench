@@ -14,7 +14,7 @@ try:
 except ImportError:
     from data import load_function
 # Assuming utils is a local module you have that contains these classes
-from utils import LiteLLMModel, HuggingFaceModel
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
 
 SUPPORTED_DATASETS = ["Buchwald-Hartwig", "Suzuki-Miyaura"]
 
@@ -25,18 +25,10 @@ def _parse_prediction(raw_text):
         return -1
 
     text = raw_text.strip()
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                ans = str(data["answer"]).strip().lower()
-                if "yes" in ans:
-                    return 1
-                elif "no" in ans:
-                    return 0
-    except Exception:
-        pass
+    ans = extract_json_answer(text, key="answer")
+
+    if ans:
+        return ans.strip()
 
     # Try to find "yeild: Yes/No" or "yield: Yes/No" pattern first
     pattern = re.compile(

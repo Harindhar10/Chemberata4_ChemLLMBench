@@ -8,7 +8,7 @@ from tqdm import tqdm
 from rdkit import Chem, RDLogger
 from pathlib import Path
 
-from utils import LiteLLMModel, HuggingFaceModel
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
 from .data import load_dataset, TASK_MAP as CSV_MAP   # task -> csv filename
 
 RDLogger.DisableLog("rdApp.*")  # silence RDKit parse warnings
@@ -58,16 +58,10 @@ def _parse_prediction(raw_text, task):
     if not text:
         return ""
 
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                ans = _strip_token(str(data["answer"]))
-                if ans:
-                    return ans
-    except Exception:
-        pass
+    ans = extract_json_answer(text, key="answer")
+
+    if ans:
+        return ans.strip()
 
     # 1) Task-specific label, e.g. "Optimal solvent: CO"
     label = re.escape(LABEL_MAP[task].strip())

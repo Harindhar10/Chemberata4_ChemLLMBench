@@ -1,5 +1,7 @@
 import gc
 import os
+import json
+import re
 import torch
 import time
 from transformers import AutoTokenizer
@@ -9,6 +11,8 @@ from langfuse import get_client, propagate_attributes
 import litellm
 from litellm import completion_cost
 
+
+_JSON_DECODER = json.JSONDecoder()
 load_dotenv(override=True)
 litellm.drop_params = True
 
@@ -131,6 +135,58 @@ class HuggingFaceModel(ModelInterface):
 
             for i, output in enumerate(result):
                 generated_text = output.outputs[0].text
-                outputs.append(generated_text.strip()[0])
+                outputs.append(generated_text.strip())
 
         return outputs 
+
+
+
+def extract_json_answer(text, key="answer"):
+    """
+    Robustly pull the value of `key` out of arbitrary LLM output.
+    Handles: surrounding prose, ```json fences, multiple/nested braces,
+    invalid escapes (e.g. SMILES backslashes), single quotes, trailing
+    commas, and truncated output. Returns a string, or None if not found.
+    """
+    if not text:
+        return None
+
+    def _clean(val):
+        if isinstance(val, (list, tuple)):
+            val = val[0] if val else None
+        if val is None:
+            return None
+        return str(val).strip()
+
+    # Escape lone backslashes that aren't valid JSON escapes (SMILES etc.)
+    def _fix_escapes(s):
+        return re.sub(r'\\(?!["\\/bfnrtu])', r"\\\\", s)
+
+    # 1) Try raw_decode starting at every '{'
+    for variant in (text, _fix_escapes(text)):
+        for m in re.finditer(r"\{", variant):
+            try:
+                obj, _ = _JSON_DECODER.raw_decode(variant[m.start():])
+            except ValueError:
+                continue
+            if isinstance(obj, dict) and key in obj:
+                out = _clean(obj[key])
+                if out is not None:
+                    return out
+
+    # 2) Lenient regex: "answer": "...", 'answer': '...', or unquoted value
+    k = re.escape(key)
+    patterns = [
+        rf'["\']?{k}["\']?\s*:\s*"((?:[^"\\]|\\.)*)"',    # double-quoted
+        rf"[\"']?{k}[\"']?\s*:\s*'((?:[^'\\]|\\.)*)'",    # single-quoted
+        rf'["\']?{k}["\']?\s*:\s*"([^"\n]*)$',            # truncated, no closing quote
+        rf'["\']?{k}["\']?\s*:\s*([^,}}\n]+)',            # unquoted value
+    ]
+    for p in patterns:
+        m = re.search(p, text, re.DOTALL | re.IGNORECASE)
+        if m:
+            val = m.group(1).strip()
+            if val:
+                return val
+
+    return None

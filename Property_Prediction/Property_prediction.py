@@ -36,14 +36,12 @@ from sklearn.metrics import (
 )
 
 from .data import load_dataset, LABEL_COL_MAP, TASK_DESCRIPTION
-from utils import LiteLLMModel, HuggingFaceModel
+from utils import LiteLLMModel, HuggingFaceModel ,extract_json_answer
 
 
 # ── Supported datasets ──────────────────────────────────────────────────────
 SUPPORTED_DATASETS = ["BBBP", "BACE", "Tox21", "HIV", "ClinTox"]
 
-
-# ── Helper: parse Yes/No from LLM output ────────────────────────────────────
 def _parse_prediction(raw_text, dataset_name):
     """Extract the first Yes/No answer relevant to the target task.
     Returns 1 (Yes), 0 (No), or -1 (parse failure)."""
@@ -51,18 +49,12 @@ def _parse_prediction(raw_text, dataset_name):
         return -1
 
     text = raw_text.strip()
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                ans = str(data["answer"]).strip().lower()
-                if "yes" in ans:
-                    return 1
-                elif "no" in ans:
-                    return 0
-    except Exception:
-        pass
+    ans = extract_json_answer(text)
+
+    if ans is not None:
+        m = re.search(r"\b(yes|no)\b", ans.lower())
+        if m:
+            return 1 if m.group(1) == "yes" else 0
 
     task_key = TASK_DESCRIPTION[dataset_name]
     text = raw_text.strip()

@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit import Chem, RDLogger
 
-from utils import LiteLLMModel, HuggingFaceModel
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
 from .data import (
     load_retro_dataset as load_dataset, INPUT_COL, TARGET_COL, INPUT_LABEL, TARGET_LABEL,
 )
@@ -27,16 +27,10 @@ def _parse_prediction(raw_text):
     if not raw_text:
         return ""
     text = _clean(raw_text)
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                ans = str(data["answer"]).strip("`'\"")
-                if ans:
-                    return ans.split()[0]
-    except Exception:
-        pass
+    ans = extract_json_answer(text, key="answer")
+
+    if ans:
+        return ans.strip()
 
     # Preferred: text after the target label, e.g. "Reactants: CCO.CC(=O)O"
     match = re.search(rf"{re.escape(TARGET_LABEL)}\s*:\s*(\S+)", text, re.IGNORECASE)

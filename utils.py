@@ -131,6 +131,6 @@ class HuggingFaceModel(ModelInterface):
 
             for i, output in enumerate(result):
                 generated_text = output.outputs[0].text
-                outputs.append(generated_text.strip().split("\n")[0])
+                outputs.append(generated_text.strip()[0])
 
         return outputs 

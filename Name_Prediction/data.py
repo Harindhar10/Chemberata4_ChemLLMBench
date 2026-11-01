@@ -10,8 +10,8 @@ SMILES_TO_FORMULA = """You are an expert chemist. Given the molecular SMILES, yo
 Please strictly follow the format, no other information can be provided. Wrap your response in JSON: {"answer": "<your answer>"}.\n
 """
 
-FORMULA_TO_SMILES = """You are an expert chemist. Given the molecular formula, your task is to predict the molecular SMILES using your experienced chemical molecular formula knowledge. \n\
-Please strictly follow the format, no other information can be provided. You should only reply with molecular SMILES string notations to represent the molecular formula. The SMILES must be valid and chemically reasonable. Wrap your response in JSON: {"answer": "<your answer>"}.\n
+IUPAC_TO_FORMULA = """You are an expert chemist. Given the molecular IUPAC name, your task is to predict the molecular formula using your experienced chemical IUPAC name and molecular formula knowledge. \n\
+Please strictly follow the format, no other information can be provided. You should only reply with the molecular formula that corresponds to the IUPAC name. Wrap your response in JSON: {"answer": "<your answer>"}.\n
 """
 
 
@@ -40,7 +40,7 @@ TASK_COL_MAP = {
     "SMILES_TO_IUPAC":   ("smiles", "iupac"),
     "IUPAC_TO_SMILES":   ("iupac",  "smiles"),
     "SMILES_TO_FORMULA": ("smiles", "formula"),
-    "FORMULA_TO_SMILES": ("formula","smiles"),
+    "IUPAC_TO_FORMULA":  ("iupac",  "formula"),
 }
 
 # System-prompt templates, keyed by task name
@@ -48,7 +48,7 @@ PROMPTS = {
     "SMILES_TO_IUPAC":   SMILES_TO_IUPAC,
     "IUPAC_TO_SMILES":   IUPAC_TO_SMILES,
     "SMILES_TO_FORMULA": SMILES_TO_FORMULA,
-    "FORMULA_TO_SMILES": FORMULA_TO_SMILES,
+    "IUPAC_TO_FORMULA":  IUPAC_TO_FORMULA,
 }
 
 # Morgan fingerprint generator (used for scaffold sampling)
@@ -98,6 +98,11 @@ def _scaffold_fingerprint(smiles):
 def _scaffold_sample_examples(df_train, train_fps, test_smiles, k, name):
     """Select the *k* training molecules whose scaffolds are most
     Tanimoto-similar to the test molecule's scaffold.
+
+    ``test_smiles`` is the structure of the test molecule, used ONLY to find
+    neighbours. The examples that are placed in the prompt are formatted with
+    the task's own columns, so for an IUPAC-input task the nearest training
+    molecules are shown as (iupac -> output) pairs.
 
     This gives each test molecule a *different* set of ICL examples that
     are structurally relevant.
@@ -154,22 +159,21 @@ def _create_prompt(sample_strategy, df_train, df_test, name, k):
         )
         return [system_prompt] * len(test_inputs), user_prompts
 
-    # Scaffold — examples depend on the test molecule
+    # Scaffold — examples depend on the test molecule.
+    # Works for every task: when the task input is an IUPAC name, it is
+    # converted to SMILES by taking the SMILES stored on the same CSV row
+    # (df_test["smiles"] is aligned with df_test["iupac"]), the scaffold
+    # neighbours are found with that SMILES, and the neighbours' IUPAC
+    # names (+ their outputs) are what end up in the prompt.
     if sample_strategy == "scaffold":
-        # Only meaningful when the input column is "smiles"
-        if from_col != "smiles":
-            raise ValueError(
-                f"Scaffold sampling requires a SMILES input column, "
-                f"but task '{name}' uses '{from_col}'. "
-                f"Use 'random' sampling instead."
-            )
+        test_smiles = df_test["smiles"].tolist()
         train_fps = [_scaffold_fingerprint(s) for s in df_train["smiles"]]
         system_prompts = [
             _build_system_prompt(
                 name,
                 _scaffold_sample_examples(df_train, train_fps, s, k, name),
             )
-            for s in test_inputs
+            for s in test_smiles
         ]
         return system_prompts, user_prompts
 
@@ -186,7 +190,8 @@ def load_dataset(name, sample_strategy="random", k=0):
     ----------
     name : str
         Task name — one of the keys in ``TASK_COL_MAP``
-        (e.g. ``"SMILES_TO_IUPAC"``, ``"FORMULA_TO_SMILES"``).
+        (``"SMILES_TO_IUPAC"``, ``"IUPAC_TO_SMILES"``,
+        ``"SMILES_TO_FORMULA"``, ``"IUPAC_TO_FORMULA"``).
     sample_strategy : str, default ``"random"``
         How to choose ICL examples: ``"random"`` or ``"scaffold"``.
     k : int, default ``0``

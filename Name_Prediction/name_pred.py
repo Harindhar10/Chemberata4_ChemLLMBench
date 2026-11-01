@@ -39,7 +39,7 @@ TASK_SHORT_NAME = {
     "SMILES_TO_IUPAC":   "smiles2iupac",
     "IUPAC_TO_SMILES":   "iupac2smiles",
     "SMILES_TO_FORMULA": "smiles2formula",
-    "FORMULA_TO_SMILES": "formula2smiles",
+    "IUPAC_TO_FORMULA":   "iupac2formula",
 }
 REPORT_COLUMNS = list(TASK_SHORT_NAME.values())
 

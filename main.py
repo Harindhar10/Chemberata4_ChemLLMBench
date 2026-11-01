@@ -57,11 +57,11 @@ TASK_REGISTRY = {
         "function": "run_benchmark",
         "kwargs": {"task_name": "SMILES_TO_FORMULA"},
     },
-    "formula_to_smiles": {
-        "display": "Name Prediction – Formula → SMILES",
+    "iupac_to_formula": {
+        "display": "Name Prediction – IUPAC → Formula",
         "module": "Name_Prediction.name_pred",
         "function": "run_benchmark",
-        "kwargs": {"task_name": "FORMULA_TO_SMILES"},
+        "kwargs": {"task_name": "IUPAC_TO_FORMULA"},
     },
 
     # ── Property Prediction (5 datasets) ─────────────────────────────────
@@ -105,11 +105,11 @@ TASK_REGISTRY = {
     },
 
     # ── Reaction Component Selection (3 sub-tasks, zero-shot only) ───────
-    "reagent_selection": {
-        "display": "Reaction Selection – Reagent (zero-shot)",
+    "reactant_selection": {
+        "display": "Reaction Selection – Reactant (zero-shot)",
         "module": SELECTION_MODULE,
         "function": "run_benchmark",
-        "kwargs": {"tasks": ["Reagent_selection"]},
+        "kwargs": {"tasks": ["Reactant_selection"]},
     },
     "ligand_selection": {
         "display": "Reaction Selection – Ligand (zero-shot)",

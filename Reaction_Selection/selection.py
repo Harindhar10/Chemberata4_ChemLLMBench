@@ -13,11 +13,11 @@ from .data import load_dataset, TASK_MAP as CSV_MAP   # task -> csv filename
 
 RDLogger.DisableLog("rdApp.*")  # silence RDKit parse warnings
 
-TASKS = ["Reagent_selection", "Ligand_selection", "Solvent_selection"]
+TASKS = ["Reactant_selection", "Ligand_selection", "Solvent_selection"]
 
 # Label the model is asked to answer with (used for parsing)
 LABEL_MAP = {
-    "Reagent_selection": "Optimal reactant",
+    "Reactant_selection": "Optimal reactant",
     "Ligand_selection": "Optimal ligand",
     "Solvent_selection": "Optimal solvent",
 }

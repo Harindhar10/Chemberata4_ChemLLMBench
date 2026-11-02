@@ -15,6 +15,7 @@ except ImportError:
     from data import load_function
 # Assuming utils is a local module you have that contains these classes
 from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
+from utils import run_tag as make_run_tag
 
 SUPPORTED_DATASETS = ["Buchwald-Hartwig", "Suzuki-Miyaura"]
 
@@ -154,8 +155,7 @@ def run_benchmark(
     # ── 5. Save results ──────────────────────────────────────────────────
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_model = model_name.replace("/", "_").replace("\\", "_")
-    run_tag = f"{dataset_name}_{safe_model}_{sample_strategy}_k{k}_{timestamp}"
+    run_tag = make_run_tag(dataset_name, model_name, temperature, max_new_tokens, sample_strategy, k)
 
     # Save predictions CSV
     results_df = df_test.copy().reset_index(drop=True)

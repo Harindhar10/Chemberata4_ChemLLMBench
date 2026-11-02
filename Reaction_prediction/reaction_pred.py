@@ -8,6 +8,7 @@ from tqdm import tqdm
 from rdkit import Chem, RDLogger
 
 from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
+from utils import run_tag as make_run_tag
 # Adjust the module path / function name to match your forward-reaction data file
 from .data import (
     load_forward_dataset as load_dataset,
@@ -164,8 +165,7 @@ def run_benchmark(
     # 5. Save
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_model = model_name.replace("/", "_").replace("\\", "_")
-    run_tag = f"FORWARD_{safe_model}_{sample_strategy}_k{k}_{timestamp}"
+    run_tag = make_run_tag("FORWARD", model_name, temperature, max_new_tokens, sample_strategy, k)
 
     results_df = df_test.copy().reset_index(drop=True)
     results_df["raw_output"] = raw_outputs

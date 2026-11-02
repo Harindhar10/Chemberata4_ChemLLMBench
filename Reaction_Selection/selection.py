@@ -9,6 +9,7 @@ from rdkit import Chem, RDLogger
 from pathlib import Path
 
 from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
+from utils import run_tag as make_run_tag
 from .data import load_dataset, TASK_MAP as CSV_MAP   # task -> csv filename
 
 RDLogger.DisableLog("rdApp.*")  # silence RDKit parse warnings
@@ -188,7 +189,6 @@ def run_benchmark(
 
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_model = model_name.replace("/", "_").replace("\\", "_")
 
     all_metrics, results = {}, {}
     for task in tasks:
@@ -199,7 +199,7 @@ def run_benchmark(
         results[task] = {"metrics": metrics, "predictions": predictions,
                          "raw_outputs": raw_outputs}
 
-        run_tag = f"{task}_{safe_model}_zeroshot_{timestamp}"
+        run_tag = make_run_tag(task, model_name, temperature, max_new_tokens)
         csv_path = os.path.join(output_dir, f"{run_tag}_predictions.csv")
         results_df.to_csv(csv_path, index=False)
         print(f"[✓] {task} predictions saved to: {csv_path}")
@@ -220,7 +220,11 @@ def run_benchmark(
         "metrics": all_metrics,
         "macro_avg_accuracy": macro_acc,
     }
-    json_path = os.path.join(output_dir, f"SELECTION_{safe_model}_zeroshot_{timestamp}_metrics.json")
+    # One file per task set, so separate single-task runs don't overwrite each other
+    prefix = tasks[0] if len(tasks) == 1 else "SELECTION"
+    json_path = os.path.join(
+        output_dir, f"{make_run_tag(prefix, model_name, temperature, max_new_tokens)}_metrics.json"
+    )
     with open(json_path, "w") as f:
         json.dump(meta, f, indent=2, default=str)
     print(f"[✓] Metrics saved to: {json_path}")

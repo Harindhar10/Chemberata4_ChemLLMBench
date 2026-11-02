@@ -319,6 +319,7 @@ def run_all_benchmarks(
     if reasoning_effort is not None and thinking == "off":
         print("WARNING: --reasoning-effort has no effect with --thinking off")
     utils.set_thinking(thinking, reasoning_effort)
+    utils.set_cache_dir(os.path.join(output_dir, "cache"))
 
     # Resolve task list
     if tasks is None:
@@ -392,7 +393,13 @@ def run_all_benchmarks(
     # Save combined summary
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    summary_path = os.path.join(output_dir, f"benchmark_summary_{timestamp}.json")
+    tag = utils.run_tag("benchmark_summary", model_name, temperature, max_new_tokens, sample_strategy, k)
+    summary_path = os.path.join(output_dir, f"{tag}.json")
+    # Same config -> same file; keep task results from earlier runs of other tasks
+    previous_tasks = {}
+    if os.path.exists(summary_path):
+        with open(summary_path) as f:
+            previous_tasks = json.load(f).get("tasks", {})
     summary = {
         "model": model_name,
         "backend": backend,
@@ -404,7 +411,7 @@ def run_all_benchmarks(
         "reasoning_effort": reasoning_effort,
         "data_dir": data_dir,
         "timestamp": timestamp,
-        "tasks": {
+        "tasks": previous_tasks | {
             key: {
                 "display": TASK_REGISTRY[key]["display"],
                 "status": res["status"],

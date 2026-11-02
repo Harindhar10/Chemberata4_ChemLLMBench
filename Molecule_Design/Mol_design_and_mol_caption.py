@@ -12,6 +12,7 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator, MACCSkeys
 
 from utils import LiteLLMModel, HuggingFaceModel , strip_thinking , extract_json_answer
+from utils import run_tag as make_run_tag
 from .data import load_dataset, TASK_COL_MAP
 
 # ── Supported tasks ─────────────────────────────────────────────────────────
@@ -261,8 +262,7 @@ def run_benchmark(
     # 5. Save
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_model = model_name.replace("/", "_").replace("\\", "_")
-    run_tag = f"{task_name}_{safe_model}_{sample_strategy}_k{k}_{timestamp}"
+    run_tag = make_run_tag(task_name, model_name, temperature, max_new_tokens, sample_strategy, k)
 
     results_df = df_test.copy().reset_index(drop=True)
     results_df["raw_output"] = raw_outputs

@@ -8,6 +8,7 @@ from tqdm import tqdm
 from rdkit import Chem, RDLogger
 
 from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
+from utils import run_tag as make_run_tag
 from .data import (
     load_retro_dataset as load_dataset, INPUT_COL, TARGET_COL, INPUT_LABEL, TARGET_LABEL,
 )
@@ -169,8 +170,7 @@ def run_benchmark(
     # 5. Save
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_model = model_name.replace("/", "_").replace("\\", "_")
-    run_tag = f"RETRO_{safe_model}_{sample_strategy}_k{k}_{timestamp}"
+    run_tag = make_run_tag("RETRO", model_name, temperature, max_new_tokens, sample_strategy, k)
 
     results_df = df_test.copy().reset_index(drop=True)
     results_df["raw_output"] = raw_outputs

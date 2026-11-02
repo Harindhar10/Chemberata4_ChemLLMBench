@@ -128,12 +128,12 @@ def _format_examples(rows, name):
 def _random_sample_examples(df, k, name):
     """k/2 positive + k/2 negative random examples (same for every test molecule)."""
     label_col = LABEL_COL_MAP[name]
-    positive_examples = df[df[label_col] == 1].sample(int(k/2))
-    negative_examples = df[df[label_col] == 0].sample(int(k/2))
+    positive_examples = df[df[label_col] == 1].sample(int(k/2), random_state=SEED)
+    negative_examples = df[df[label_col] == 0].sample(int(k/2), random_state=SEED)
 
     if name.lower() == "hiv":
-        positive_examples = df[df[label_col] == 1].sample(int(0.2*k))
-        negative_examples = df[df[label_col] == 0].sample(int(0.8*k))
+        positive_examples = df[df[label_col] == 1].sample(int(0.2*k), random_state=SEED)
+        negative_examples = df[df[label_col] == 0].sample(int(0.8*k), random_state=SEED)
 
     return _format_examples(pd.concat([positive_examples, negative_examples]), name)
 

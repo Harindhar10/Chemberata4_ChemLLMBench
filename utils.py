@@ -2,6 +2,7 @@ import gc
 import os
 import json
 import re
+import hashlib
 import torch
 import time
 import threading
@@ -68,11 +69,15 @@ def set_api_concurrency(concurrency):
 
 # Extra variables passed to the tokenizer's chat template (local backend only).
 CHAT_TEMPLATE_KWARGS = {}
+THINKING_MODE = "default"
+REASONING_EFFORT = None
 
 
 def set_thinking(mode="default", effort=None):
     """mode: 'on' | 'off' | 'default' (leave the template's own behaviour).
     effort: reasoning_effort template variable (e.g. low/medium/xhigh), or None."""
+    global THINKING_MODE, REASONING_EFFORT
+    THINKING_MODE, REASONING_EFFORT = mode, effort
     CHAT_TEMPLATE_KWARGS.clear()
     if mode == "on":
         CHAT_TEMPLATE_KWARGS["enable_thinking"] = True
@@ -82,6 +87,78 @@ def set_thinking(mode="default", effort=None):
         raise ValueError(f"Unknown thinking mode: {mode!r}. Use 'on', 'off' or 'default'.")
     if effort is not None:
         CHAT_TEMPLATE_KWARGS["reasoning_effort"] = effort
+
+
+def safe_name(name):
+    return name.replace("/", "_").replace("\\", "_")
+
+
+def run_tag(prefix, model_name, temperature, max_new_tokens, sample_strategy=None, k=None):
+    """Deterministic result-file stem describing the run configuration, e.g.
+    BBBP_Qwen_Qwen3.8-27B_random_k8_think-on_effort-low_tok4096_temp0"""
+    parts = [prefix, safe_name(model_name)]
+    parts.append(f"{sample_strategy}_k{k}" if sample_strategy is not None else "zeroshot")
+    parts.append(f"think-{THINKING_MODE}")
+    if REASONING_EFFORT is not None:
+        parts.append(f"effort-{REASONING_EFFORT}")
+    parts.append(f"tok{max_new_tokens}")
+    parts.append(f"temp{temperature:g}")
+    return "_".join(parts)
+
+
+# ── Per-sample generation cache ──────────────────────────────────────────────
+# Every generated sample is appended to <CACHE_DIR>/<model>.jsonl keyed by a hash
+# of the exact prompt + sampling settings, so re-runs only generate new samples.
+CACHE_DIR = os.path.join("results", "cache")
+_CACHES = {}
+
+
+def set_cache_dir(path):
+    global CACHE_DIR
+    CACHE_DIR = path
+    _CACHES.clear()
+
+
+def _cache_key(**parts):
+    return hashlib.sha256(json.dumps(parts, sort_keys=True).encode()).hexdigest()
+
+
+class _SampleCache:
+
+    def __init__(self, model_name):
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        self.path = os.path.join(CACHE_DIR, f"{safe_name(model_name)}.jsonl")
+        self.entries = {}
+        self._lock = threading.Lock()
+        if os.path.exists(self.path):
+            with open(self.path) as f:
+                for line in f:
+                    try:
+                        rec = json.loads(line)
+                    except json.JSONDecodeError:  # partial last line after a crash
+                        continue
+                    self.entries[rec["key"]] = rec
+
+    def get(self, key):
+        return self.entries.get(key)
+
+    def put_many(self, records):
+        with self._lock, open(self.path, "a") as f:
+            for rec in records:
+                self.entries[rec["key"]] = rec
+                f.write(json.dumps(rec) + "\n")
+            f.flush()
+
+
+def _get_cache(model_name):
+    path = os.path.join(CACHE_DIR, f"{safe_name(model_name)}.jsonl")
+    if path not in _CACHES:
+        _CACHES[path] = _SampleCache(model_name)
+    return _CACHES[path]
+
+
+# Prompts are generated (and cached) in chunks so an interrupted run keeps its progress.
+GENERATION_CHUNK = 512
 
 
 # A prompt ending in an opening reasoning tag means the model's output starts
@@ -185,16 +262,27 @@ class LiteLLMModel(ModelInterface):
     def generate_batch(self, user_prompts, sys_prompts, n=1) -> list[list[str]]:
         from tqdm import tqdm
 
-        def _one(pair):
-            user_prompt, sys_prompt = pair
-            return self.generate(sys_prompt=sys_prompt, user_prompt=user_prompt, n=n)
+        cache = _get_cache(self.model_name)
+        keys = [
+            _cache_key(model=self.model_name, sys=s, user=u, n=n,
+                       temperature=self.kwargs.get("temperature", 0.0))
+            for u, s in zip(user_prompts, sys_prompts)
+        ]
+        results = [cache.get(k_)["outputs"] if cache.get(k_) else None for k_ in keys]
+        todo = [i for i, r in enumerate(results) if r is None]
+        print(f"[*] {len(results) - len(todo)}/{len(results)} samples cached, generating {len(todo)}")
+
+        def _one(i):
+            outputs = self.generate(sys_prompt=sys_prompts[i], user_prompt=user_prompts[i], n=n)
+            # Failed API calls return "" and are not cached so they are retried next run
+            if all(outputs):
+                cache.put_many([{"key": keys[i], "outputs": outputs}])
+            return i, outputs
 
         with ThreadPoolExecutor(max_workers=API_CONCURRENCY) as pool:
-            return list(tqdm(
-                pool.map(_one, zip(user_prompts, sys_prompts)),
-                total=len(user_prompts),
-                desc=self.model_name,
-            ))
+            for i, outputs in tqdm(pool.map(_one, todo), total=len(todo), desc=self.model_name):
+                results[i] = outputs
+        return results
 
 
 class HuggingFaceModel(ModelInterface):
@@ -257,23 +345,42 @@ class HuggingFaceModel(ModelInterface):
             top_p=1.0,
             max_tokens=self.max_new_tokens,
         )
-        results = self.llm.generate(prompts, params, use_tqdm=True)
+
+        cache = _get_cache(self.model_name)
+        keys = [
+            _cache_key(model=self.model_name, prompt=p, n=n, temperature=self.temperature,
+                       top_p=1.0, max_tokens=self.max_new_tokens)
+            for p in prompts
+        ]
+        records = [cache.get(k_) for k_ in keys]
+        todo = [i for i, r in enumerate(records) if r is None]
+        print(f"[*] {len(prompts) - len(todo)}/{len(prompts)} samples cached, generating {len(todo)}")
+
+        for start in range(0, len(todo), GENERATION_CHUNK):
+            chunk = todo[start:start + GENERATION_CHUNK]
+            results = self.llm.generate([prompts[i] for i in chunk], params, use_tqdm=True)
+            new_records = []
+            for i, out in zip(chunk, results):
+                m = _TRAILING_THINK_OPEN.search(prompts[i])
+                open_tag = m.group(0).strip() + "\n" if m else ""
+                records[i] = {
+                    "key": keys[i],
+                    "outputs": [(open_tag + c.text).strip() for c in out.outputs],
+                    "finish_reasons": [c.finish_reason for c in out.outputs],
+                }
+                new_records.append(records[i])
+            cache.put_many(new_records)
 
         all_outputs = []
         total = truncated = unfinished = 0
-        for prompt, out in zip(prompts, results):
-            m = _TRAILING_THINK_OPEN.search(prompt)
-            open_tag = m.group(0).strip() + "\n" if m else ""
-            texts = []
-            for c in out.outputs:
-                text = open_tag + c.text
+        for rec in records:
+            for text, reason in zip(rec["outputs"], rec["finish_reasons"]):
                 total += 1
-                if c.finish_reason == "length":
+                if reason == "length":
                     truncated += 1
                     if not strip_thinking(text):
                         unfinished += 1
-                texts.append(text.strip())
-            all_outputs.append(texts)
+            all_outputs.append(rec["outputs"])
 
         self.last_truncated = truncated
         if truncated:

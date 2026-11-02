@@ -179,7 +179,7 @@ TASK_GROUPS = {
 }
 
 # Metric keys tried (in order) when printing the one-line summary
-PRIMARY_METRIC_KEYS = ("accuracy", "exact_match", "top1_accuracy")
+PRIMARY_METRIC_KEYS = ("accuracy", "exact_match", "top1_accuracy", "exact", "bleu4")
 INVALID_METRIC_KEY = "invalid_smiles_percent"
 
 
@@ -224,10 +224,84 @@ def _extract_metrics(result):
 
 def _primary_metric(metrics):
     """First available primary metric (0.0 is a valid value, not 'missing')."""
+    name = _primary_metric_name(metrics)
+    return metrics[name] if name else None
+
+
+def _primary_metric_name(metrics):
     for key in PRIMARY_METRIC_KEYS:
         if metrics.get(key) is not None:
-            return metrics[key]
+            return key
     return None
+
+
+# ── Leaderboard: one row per (model, run config), one column per task ───────
+LEADERBOARD_CONFIG_COLS = ("model", "backend", "sample_strategy", "k", "thinking",
+                           "reasoning_effort", "max_new_tokens", "temperature")
+
+
+def _update_leaderboard(output_dir, config_id, config, task_key, res):
+    """Record one task result in <output_dir>/leaderboard.json and rebuild leaderboard.csv."""
+    import csv
+    json_path = os.path.join(output_dir, "leaderboard.json")
+    board = {}
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            board = json.load(f)
+
+    entry = board.setdefault(config_id, {"config": config, "tasks": {}})
+    entry["config"] = config
+    previous = entry["tasks"].get(task_key)
+    if res["status"] == "success":
+        metrics = _extract_metrics(res["result"])
+        name = _primary_metric_name(metrics)
+        entry["tasks"][task_key] = {
+            "status": "success",
+            "metric": name,
+            "score": metrics.get(name) if name else None,
+            "invalid_smiles_percent": metrics.get(INVALID_METRIC_KEY),
+            "metrics": metrics,
+            "updated": datetime.datetime.now().isoformat(timespec="seconds"),
+        }
+    elif previous is None or previous.get("status") != "success":
+        # A failed rerun never replaces an earlier successful score
+        entry["tasks"][task_key] = {"status": "error", "error": res.get("error")}
+
+    os.makedirs(output_dir, exist_ok=True)
+    tmp = json_path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(board, f, indent=2, default=str)
+    os.replace(tmp, json_path)
+
+    # Wide CSV: tasks in registry order, header shows which metric is reported
+    metric_of = {}
+    for e in board.values():
+        for t, r in e["tasks"].items():
+            if r.get("metric"):
+                metric_of.setdefault(t, r["metric"])
+    task_cols = [t for t in TASK_REGISTRY if any(t in e["tasks"] for e in board.values())]
+    header = list(LEADERBOARD_CONFIG_COLS) + [
+        f"{t} ({metric_of[t]})" if t in metric_of else t for t in task_cols
+    ]
+    rows = []
+    for e in sorted(board.values(), key=lambda e: [str(e["config"].get(c)) for c in LEADERBOARD_CONFIG_COLS]):
+        row = [e["config"].get(c) for c in LEADERBOARD_CONFIG_COLS]
+        for t in task_cols:
+            r = e["tasks"].get(t)
+            if r is None:
+                row.append("")
+            elif r["status"] != "success":
+                row.append("FAILED")
+            else:
+                row.append("" if r["score"] is None else round(r["score"], 4))
+        rows.append(row)
+    csv_path = os.path.join(output_dir, "leaderboard.csv")
+    tmp = csv_path + ".tmp"
+    with open(tmp, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(rows)
+    os.replace(tmp, csv_path)
 
 
 def _run_single_task(task_key, model_name, backend, sample_strategy, k,
@@ -358,6 +432,18 @@ def run_all_benchmarks(
     print(f"  Tasks    : {', '.join(task_keys)}")
     print(f"{'═' * 70}")
 
+    config_id = utils.run_tag(None, model_name, temperature, max_new_tokens, sample_strategy, k)
+    config = {
+        "model": model_name,
+        "backend": backend,
+        "sample_strategy": sample_strategy,
+        "k": k,
+        "thinking": thinking,
+        "reasoning_effort": reasoning_effort,
+        "max_new_tokens": max_new_tokens,
+        "temperature": temperature,
+    }
+
     all_results = {}
     for task_key in task_keys:
         result = _run_single_task(
@@ -372,6 +458,7 @@ def run_all_benchmarks(
             data_dir=data_dir,
         )
         all_results[task_key] = result
+        _update_leaderboard(output_dir, config_id, config, task_key, result)
 
     # ── Summary ──────────────────────────────────────────────────────────
     print(f"\n{'═' * 70}")
@@ -424,6 +511,7 @@ def run_all_benchmarks(
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2, default=str)
     print(f"[✓] Summary saved to: {summary_path}")
+    print(f"[✓] Leaderboard (all models/configs): {os.path.join(output_dir, 'leaderboard.csv')}")
 
     return all_results
 

@@ -96,7 +96,7 @@ def safe_name(name):
 def run_tag(prefix, model_name, temperature, max_new_tokens, sample_strategy=None, k=None):
     """Deterministic result-file stem describing the run configuration, e.g.
     BBBP_Qwen_Qwen3.8-27B_random_k8_think-on_effort-low_tok4096_temp0"""
-    parts = [prefix, safe_name(model_name)]
+    parts = ([prefix] if prefix else []) + [safe_name(model_name)]
     parts.append(f"{sample_strategy}_k{k}" if sample_strategy is not None else "zeroshot")
     parts.append(f"think-{THINKING_MODE}")
     if REASONING_EFFORT is not None:

@@ -150,17 +150,10 @@ def run_task(task, model, model_name, data_dir):
     df = df.reset_index(drop=True)
     y_true = df["ground_truth"].astype(str).tolist()
 
-    raw_outputs, predictions = [], []
     print(f"[*] Running zero-shot inference on {len(user_prompts)} samples …")
-    for idx in tqdm(range(len(user_prompts)), desc=task):
-        outputs = model.generate(
-            user_prompt=user_prompts[idx],
-            sys_prompt=system_prompts[idx],
-            n=1,
-        )
-        raw_text = outputs[0] if outputs else ""
-        raw_outputs.append(raw_text)
-        predictions.append(_parse_prediction(raw_text, task))
+    all_outputs = model.generate_batch(user_prompts, system_prompts, n=1)
+    raw_outputs = [outs[0] if outs else "" for outs in all_outputs]
+    predictions = [_parse_prediction(t, task) for t in raw_outputs]
 
     metrics, correct_flags = _compute_accuracy(y_true, predictions)
     _print_metrics(task, metrics, model_name)

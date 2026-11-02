@@ -246,17 +246,10 @@ def run_benchmark(
     model = _build_model(backend, model_name, temperature, max_new_tokens)
 
     # 3. Inference
-    raw_outputs, predictions = [], []
     print(f"[*] Running inference on {len(user_prompts)} samples …")
-    for idx in tqdm(range(len(user_prompts)), desc=task_name):
-        outputs = model.generate(
-            user_prompt=user_prompts[idx],
-            sys_prompt=system_prompts[idx],
-            n=n,
-        )
-        raw_text = outputs[0] if outputs else ""
-        raw_outputs.append(raw_text)
-        predictions.append(_parse_prediction(raw_text, task_name))
+    all_outputs = model.generate_batch(user_prompts, system_prompts, n=n)
+    raw_outputs = [outs[0] if outs else "" for outs in all_outputs]
+    predictions = [_parse_prediction(t, task_name) for t in raw_outputs]
 
     # 4. Evaluate + print
     print("[*] Computing metrics …")

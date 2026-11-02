@@ -442,8 +442,28 @@ def main():
     parser.add_argument("--data-dir", type=str, default=".",
                         help="Directory with reagent/ligand/solvent *_sample.csv files "
                              "(selection tasks only).")
+    parser.add_argument("--max-num-seqs", type=int, default=256,
+                        help="vLLM: max sequences decoded concurrently (lower it if the "
+                             "KV/Mamba cache is too small).")
+    parser.add_argument("--gpu-memory-utilization", type=float, default=0.90,
+                        help="vLLM: fraction of GPU memory the engine may use.")
+    parser.add_argument("--max-model-len", type=int, default=None,
+                        help="vLLM: max context length (default: model's own limit).")
+    parser.add_argument("--enforce-eager", action="store_true",
+                        help="vLLM: disable CUDA graphs (slower, uses less memory).")
+    parser.add_argument("--api-concurrency", type=int, default=8,
+                        help="API backend: number of concurrent requests.")
 
     args = parser.parse_args()
+
+    import utils
+    utils.set_vllm_engine_args(
+        max_num_seqs=args.max_num_seqs,
+        gpu_memory_utilization=args.gpu_memory_utilization,
+        max_model_len=args.max_model_len,
+        enforce_eager=args.enforce_eager,
+    )
+    utils.set_api_concurrency(args.api_concurrency)
 
     run_all_benchmarks(
         model_name=args.model,

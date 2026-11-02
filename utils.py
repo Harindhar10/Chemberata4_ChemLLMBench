@@ -4,6 +4,8 @@ import json
 import re
 import torch
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from dotenv import load_dotenv
@@ -36,6 +38,32 @@ if os.environ.get('LANGFUSE_PUBLIC_KEY') and os.environ.get('LANGFUSE_SECRET_KEY
 else:
     LANGFUSE = None
     print('WARNING: LANGFUSE_PUBLIC_KEY/LANGFUSE_SECRET_KEY not set - nothing will be logged to Langfuse')
+
+
+# vLLM engine settings shared by every task; main.py overrides them via the CLI.
+# max_num_seqs must stay below the KV/Mamba cache capacity of the GPU.
+VLLM_ENGINE_ARGS = {
+    "max_num_seqs": 256,
+    "gpu_memory_utilization": 0.90,
+    "max_model_len": None,
+    "trust_remote_code": True,
+    "enforce_eager": False,
+}
+
+# Number of concurrent requests LiteLLMModel.generate_batch sends to the API.
+API_CONCURRENCY = 8
+
+# One vLLM engine per model, reused across tasks so the GPU is not re-allocated.
+_ENGINE_CACHE = {}
+
+
+def set_vllm_engine_args(**kwargs):
+    VLLM_ENGINE_ARGS.update(kwargs)
+
+
+def set_api_concurrency(concurrency):
+    global API_CONCURRENCY
+    API_CONCURRENCY = max(1, int(concurrency))
 
 
 
@@ -74,6 +102,9 @@ class ModelInterface:
     def generate(self, prompt: str, n: int = 1, temperature: float = 0.7) -> list[str]:
         raise NotImplementedError
 
+    def generate_batch(self, user_prompts, sys_prompts, n=1) -> list[list[str]]:
+        raise NotImplementedError
+
 
 class LiteLLMModel(ModelInterface):
 
@@ -83,6 +114,7 @@ class LiteLLMModel(ModelInterface):
         self.max_retries = max_retries
         self.cost = 0.0
         self.kwargs = kwargs
+        self._cost_lock = threading.Lock()
 
     def _generate_parameters(self,sys_prompt,user_prompt):
         messages = [
@@ -113,7 +145,8 @@ class LiteLLMModel(ModelInterface):
                     
                     response = litellm.completion(**params)
                     
-                    self.cost += float(response._hidden_params.get('response_cost', 0))
+                    with self._cost_lock:
+                        self.cost += float(response._hidden_params.get('response_cost', 0))
                     text = response.choices[0].message.content.strip()
                     break
                 except Exception as e:
@@ -123,6 +156,20 @@ class LiteLLMModel(ModelInterface):
             time.sleep(0.5)                         
         return outputs
 
+    def generate_batch(self, user_prompts, sys_prompts, n=1) -> list[list[str]]:
+        from tqdm import tqdm
+
+        def _one(pair):
+            user_prompt, sys_prompt = pair
+            return self.generate(sys_prompt=sys_prompt, user_prompt=user_prompt, n=n)
+
+        with ThreadPoolExecutor(max_workers=API_CONCURRENCY) as pool:
+            return list(tqdm(
+                pool.map(_one, zip(user_prompts, sys_prompts)),
+                total=len(user_prompts),
+                desc=self.model_name,
+            ))
+
 
 class HuggingFaceModel(ModelInterface):
 
@@ -130,8 +177,16 @@ class HuggingFaceModel(ModelInterface):
         self.temperature = temperature
         self.model_name = model_name
         self.max_new_tokens = max_new_tokens
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        self.llm = LLM(model=self.model_name)
+        self._warned_no_template = False
+
+        if model_name not in _ENGINE_CACHE:
+            engine_args = {k: v for k, v in VLLM_ENGINE_ARGS.items() if v is not None}
+            print(f"[*] Loading vLLM engine for {model_name} with {engine_args}")
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_name, trust_remote_code=engine_args.get("trust_remote_code", True)
+            )
+            _ENGINE_CACHE[model_name] = (tokenizer, LLM(model=model_name, **engine_args))
+        self.tokenizer, self.llm = _ENGINE_CACHE[model_name]
 
 
 
@@ -157,31 +212,28 @@ class HuggingFaceModel(ModelInterface):
 
 
 
-    def generate(self, user_prompt, sys_prompt, n=1) -> list[str]:
-        outputs = []
-
+    def _prompt_text(self, user_prompt, sys_prompt):
         try:
-            prompt = self.build_chat_prompt(user_prompt, sys_prompt)
+            return self.build_chat_prompt(user_prompt, sys_prompt)
         except Exception as e: #incase model does not support chat template
-            print(f"Error in building chat prompt: {e}")
-            prompt = sys_prompt + user_prompt
+            if not self._warned_no_template:
+                print(f"Error in building chat prompt, falling back to raw text: {e}")
+                self._warned_no_template = True
+            return sys_prompt + user_prompt
 
-        for _ in range(n):
-            
+    def generate_batch(self, user_prompts, sys_prompts, n=1) -> list[list[str]]:
+        prompts = [self._prompt_text(u, s) for u, s in zip(user_prompts, sys_prompts)]
+        params = SamplingParams(
+            n=n,
+            temperature=self.temperature,
+            top_p=1.0,
+            max_tokens=self.max_new_tokens,
+        )
+        results = self.llm.generate(prompts, params, use_tqdm=True)
+        return [[c.text.strip() for c in out.outputs] for out in results]
 
-            params = SamplingParams(
-                temperature=self.temperature,
-                top_p=1.0,
-                max_tokens=self.max_new_tokens,
-            )
-
-            result = self.llm.generate(prompt, params)
-
-            for i, output in enumerate(result):
-                generated_text = output.outputs[0].text
-                outputs.append(generated_text.strip())
-
-        return outputs 
+    def generate(self, user_prompt, sys_prompt, n=1) -> list[str]:
+        return self.generate_batch([user_prompt], [sys_prompt], n=n)[0]
 
 
 

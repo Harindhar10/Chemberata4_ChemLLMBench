@@ -152,7 +152,7 @@ TASK_REGISTRY = {
         "kwargs": {"dataset_name": "Buchwald-Hartwig"},
     },
 
-    "suzuki-miyaura": {
+    "Suzuki-Miyaura": {
         "display": "Reaction Yield Prediction – Suzuki-Miyaura",
         "module": "Yield_prediction.yield_pred",
         "function": "run_benchmark",

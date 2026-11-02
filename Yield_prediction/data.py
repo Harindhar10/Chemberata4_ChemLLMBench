@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import numpy as np
 import os
-
+from pathlib import Path
 # ---------------------------------------------------------------------------
 # Constants & Prompts
 # ---------------------------------------------------------------------------
@@ -29,11 +29,14 @@ You will be provided with several examples molecules. Please answer with only Ye
 """
 
 # Local file paths (assumes the files are in the same folder as this script)
-BH_TRAIN_FILE = "BH_dataset .npz"
-BH_TEST_FILE = "BH_sample_100_test.npZ"
 
-SUZUKI_TRAIN_FILE = "Suzuki.npz"
-SUZUKI_TEST_FILE = "SU_sample_100_test.npZ"
+URL = Path(__file__).parent 
+
+BH_TRAIN_FILE = URL/"BH_dataset .npz"
+BH_TEST_FILE = URL/ "BH_sample_100_test.npz"
+
+SUZUKI_TRAIN_FILE = URL/"Suzuki.npz"
+SUZUKI_TEST_FILE = URL/"SU_sample_100_test.npz"
 
 SUZUKI_MAP = {
     "train": SUZUKI_TRAIN_FILE,

@@ -184,41 +184,6 @@ def load_function(name, sample_strategy="random", k=0):
     return system_prompts, user_prompts, df_test
 
 
-def _parse_prediction(raw_text, dataset_name):
-    import re, json
-    """Extract the first Yes/No answer relevant to the target task.
-    Returns 1 (Yes), 0 (No), or -1 (parse failure)."""
-    if not raw_text:
-        return -1
-
-    text = raw_text.strip()
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                ans = str(data["answer"]).strip().lower()
-                if "yes" in ans:
-                    return 1
-                elif "no" in ans:
-                    return 0
-    except Exception:
-        pass
-
-    # Try to find "<TaskKey>: Yes/No" pattern first
-    pattern = re.compile(
-        rf"High yeilding\s*:\s*(Yes|No)", re.IGNORECASE
-    )
-    match = pattern.search(text)
-    if match:
-        return 1 if match.group(1).lower() == "yes" else 0
-
-    # Fallback: first standalone Yes or No in the text
-    fallback = re.search(r"\b(Yes|No)\b", text, re.IGNORECASE)
-    if fallback:
-        return 1 if fallback.group(1).lower() == "yes" else 0
-
-    return -1
 
 
 
@@ -228,7 +193,7 @@ if __name__ == "__main__":
     print("-----------")
     print(u_p[0])
     print("i would say thats a Yes.")
-    print(_parse_prediction("i would say thats a Yes.", "Buchwald-Hartwig"))
+
 
 
 

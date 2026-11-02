@@ -28,8 +28,10 @@ def _parse_prediction(raw_text):
     text = strip_thinking(text)
     ans = extract_json_answer(text, key="answer")
 
-    if ans:
-        return ans.strip()
+    if ans is not None:
+        m = re.search(r"\b(yes|no)\b", ans.lower())
+        if m:
+            return 1 if m.group(1) == "yes" else 0
 
     # Try to find "yeild: Yes/No" or "yield: Yes/No" pattern first
     pattern = re.compile(

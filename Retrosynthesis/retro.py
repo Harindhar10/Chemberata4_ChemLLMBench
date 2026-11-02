@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit import Chem, RDLogger
 
-from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
 from .data import (
     load_retro_dataset as load_dataset, INPUT_COL, TARGET_COL, INPUT_LABEL, TARGET_LABEL,
 )
@@ -27,6 +27,7 @@ def _parse_prediction(raw_text):
     if not raw_text:
         return ""
     text = _clean(raw_text)
+    text = strip_thinking(text)
     ans = extract_json_answer(text, key="answer")
 
     if ans:

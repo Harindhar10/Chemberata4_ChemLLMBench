@@ -8,7 +8,7 @@ SOLVENT_CSV = "solvent_sample.csv"
 
 
 TASK_MAP = {
-    "Reagent_selection":REAGENT_CSV,
+    "Reactant_selection":REAGENT_CSV,
     "Ligand_selection":LIGAND_CSV,
     "Solvent_selection":SOLVENT_CSV
 }

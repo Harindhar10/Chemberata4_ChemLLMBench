@@ -26,7 +26,7 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit import Chem, RDLogger
 from .data import load_dataset, TASK_COL_MAP
-from utils import LiteLLMModel, HuggingFaceModel , extract_json_answer
+from utils import LiteLLMModel, HuggingFaceModel , extract_json_answer, strip_thinking
 
 RDLogger.DisableLog("rdApp.*")  # silence RDKit parse warnings for invalid SMILES
 
@@ -59,6 +59,8 @@ def _parse_prediction(raw_text, task_name):
         return ""
 
     text = raw_text.strip()
+
+    text = strip_thinking(text)
 
     ans = extract_json_answer(text, key="answer")
 

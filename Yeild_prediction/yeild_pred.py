@@ -14,7 +14,7 @@ try:
 except ImportError:
     from data import load_function
 # Assuming utils is a local module you have that contains these classes
-from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
 
 SUPPORTED_DATASETS = ["Buchwald-Hartwig", "Suzuki-Miyaura"]
 
@@ -25,6 +25,7 @@ def _parse_prediction(raw_text):
         return -1
 
     text = raw_text.strip()
+    text = strip_thinking(text)
     ans = extract_json_answer(text, key="answer")
 
     if ans:

@@ -145,6 +145,19 @@ TASK_REGISTRY = {
         "function": "run_benchmark",
         "kwargs": {"task_name": "MOL_DESIGN"},
     },
+    "Buchwald-Hartwig": {
+        "display": "Reaction Yield Prediction – Buchwald-Hartwig",
+        "module": "Yield_prediction.yield_pred",
+        "function": "run_benchmark",
+        "kwargs": {"dataset_name": "Buchwald-Hartwig"},
+    },
+
+    "suzuki-miyaura": {
+        "display": "Reaction Yield Prediction – Suzuki-Miyaura",
+        "module": "Yield_prediction.yield_pred",
+        "function": "run_benchmark",
+        "kwargs": {"dataset_name": "Suzuki-Miyaura"},
+    },
 }
 
 # Convenience groups
@@ -161,6 +174,8 @@ TASK_GROUPS = {
     ],
     "retrosynthesis": ["retrosynthesis"],
     "molecule_design": ["mol_caption", "mol_design"],
+
+    "yield_prediction": ["Buchwald-Hartwig", "Suzuki-Miyaura"],
 }
 
 # Metric keys tried (in order) when printing the one-line summary

@@ -36,7 +36,7 @@ from sklearn.metrics import (
 )
 
 from .data import load_dataset, LABEL_COL_MAP, TASK_DESCRIPTION
-from utils import LiteLLMModel, HuggingFaceModel ,extract_json_answer
+from utils import LiteLLMModel, HuggingFaceModel ,extract_json_answer, strip_thinking
 
 
 # ── Supported datasets ──────────────────────────────────────────────────────
@@ -49,6 +49,7 @@ def _parse_prediction(raw_text, dataset_name):
         return -1
 
     text = raw_text.strip()
+    text = strip_thinking(text)
     ans = extract_json_answer(text)
 
     if ans is not None:

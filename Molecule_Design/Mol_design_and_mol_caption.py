@@ -11,7 +11,7 @@ import Levenshtein
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator, MACCSkeys
 
-from utils import LiteLLMModel, HuggingFaceModel
+from utils import LiteLLMModel, HuggingFaceModel , strip_thinking , extract_json_answer
 from .data import load_dataset, TASK_COL_MAP
 
 # ── Supported tasks ─────────────────────────────────────────────────────────
@@ -36,17 +36,13 @@ def _parse_prediction(raw_text, task_name):
         return ""
 
     text = raw_text.strip()
-    try:
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            data = json.loads(json_match.group(0))
-            if "answer" in data:
-                ans = str(data["answer"]).strip()
-                if task_name == "MOL_DESIGN":
-                    return ans.split()[0] if ans else ""
-                return ans
-    except Exception:
-        pass
+    text = strip_thinking(text)
+
+    ans = extract_json_answer(text)
+    if ans:
+        return ans.strip()
+
+    
     _, tgt_col = TASK_COL_MAP[task_name]
     match = None
 

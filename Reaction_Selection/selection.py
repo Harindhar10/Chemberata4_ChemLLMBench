@@ -8,7 +8,7 @@ from tqdm import tqdm
 from rdkit import Chem, RDLogger
 from pathlib import Path
 
-from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
 from .data import load_dataset, TASK_MAP as CSV_MAP   # task -> csv filename
 
 RDLogger.DisableLog("rdApp.*")  # silence RDKit parse warnings
@@ -58,6 +58,7 @@ def _parse_prediction(raw_text, task):
     if not text:
         return ""
 
+    text = strip_thinking(text)
     ans = extract_json_answer(text, key="answer")
 
     if ans:

@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from rdkit import Chem, RDLogger
 
-from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer
+from utils import LiteLLMModel, HuggingFaceModel, extract_json_answer, strip_thinking
 # Adjust the module path / function name to match your forward-reaction data file
 from .data import (
     load_forward_dataset as load_dataset,
@@ -31,6 +31,7 @@ def _parse_prediction(raw_text):
     if not raw_text:
         return ""
     text = _clean(raw_text)
+    text = strip_thinking(text)
     ans = extract_json_answer(text, key="answer")
 
     if ans:

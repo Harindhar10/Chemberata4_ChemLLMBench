@@ -26,6 +26,8 @@ def _parse_prediction(raw_text):
 
     text = raw_text.strip()
     text = strip_thinking(text)
+    if not text:
+        return -1
     ans = extract_json_answer(text, key="answer")
 
     if ans is not None:

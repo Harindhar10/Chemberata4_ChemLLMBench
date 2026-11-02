@@ -66,6 +66,32 @@ def set_api_concurrency(concurrency):
     API_CONCURRENCY = max(1, int(concurrency))
 
 
+# Extra variables passed to the tokenizer's chat template (local backend only).
+CHAT_TEMPLATE_KWARGS = {}
+
+
+def set_thinking(mode="default", effort=None):
+    """mode: 'on' | 'off' | 'default' (leave the template's own behaviour).
+    effort: reasoning_effort template variable (e.g. low/medium/xhigh), or None."""
+    CHAT_TEMPLATE_KWARGS.clear()
+    if mode == "on":
+        CHAT_TEMPLATE_KWARGS["enable_thinking"] = True
+    elif mode == "off":
+        CHAT_TEMPLATE_KWARGS["enable_thinking"] = False
+    elif mode != "default":
+        raise ValueError(f"Unknown thinking mode: {mode!r}. Use 'on', 'off' or 'default'.")
+    if effort is not None:
+        CHAT_TEMPLATE_KWARGS["reasoning_effort"] = effort
+
+
+# A prompt ending in an opening reasoning tag means the model's output starts
+# mid-reasoning; the tag is re-attached so strip_thinking can detect truncation.
+_TRAILING_THINK_OPEN = re.compile(
+    "(?:" + "|".join(open_re for open_re, _ in _THINK_PAIRS) + r")\s*$",
+    re.IGNORECASE,
+)
+
+
 
 
 
@@ -178,6 +204,7 @@ class HuggingFaceModel(ModelInterface):
         self.model_name = model_name
         self.max_new_tokens = max_new_tokens
         self._warned_no_template = False
+        self.last_truncated = 0
 
         if model_name not in _ENGINE_CACHE:
             engine_args = {k: v for k, v in VLLM_ENGINE_ARGS.items() if v is not None}
@@ -206,6 +233,7 @@ class HuggingFaceModel(ModelInterface):
             messages,
             tokenize=False,
             add_generation_prompt=True,
+            **CHAT_TEMPLATE_KWARGS,
         )
 
         return chat_prompt
@@ -230,7 +258,28 @@ class HuggingFaceModel(ModelInterface):
             max_tokens=self.max_new_tokens,
         )
         results = self.llm.generate(prompts, params, use_tqdm=True)
-        return [[c.text.strip() for c in out.outputs] for out in results]
+
+        all_outputs = []
+        total = truncated = unfinished = 0
+        for prompt, out in zip(prompts, results):
+            m = _TRAILING_THINK_OPEN.search(prompt)
+            open_tag = m.group(0).strip() + "\n" if m else ""
+            texts = []
+            for c in out.outputs:
+                text = open_tag + c.text
+                total += 1
+                if c.finish_reason == "length":
+                    truncated += 1
+                    if not strip_thinking(text):
+                        unfinished += 1
+                texts.append(text.strip())
+            all_outputs.append(texts)
+
+        self.last_truncated = truncated
+        if truncated:
+            print(f"[!] {truncated}/{total} outputs hit max_new_tokens "
+                  f"({unfinished} with unfinished reasoning)")
+        return all_outputs
 
     def generate(self, user_prompt, sys_prompt, n=1) -> list[str]:
         return self.generate_batch([user_prompt], [sys_prompt], n=n)[0]

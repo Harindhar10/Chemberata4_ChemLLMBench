@@ -28,6 +28,8 @@ def _parse_prediction(raw_text):
         return ""
     text = _clean(raw_text)
     text = strip_thinking(text)
+    if not text:
+        return ""
     ans = extract_json_answer(text, key="answer")
 
     if ans:

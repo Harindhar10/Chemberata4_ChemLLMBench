@@ -273,6 +273,8 @@ def run_all_benchmarks(
     max_new_tokens: int = 256,
     output_dir: str = "results",
     data_dir: str = ".",
+    thinking: str = "default",
+    reasoning_effort: str | None = None,
 ):
     """
     Run one or more ChemLLMBench tasks.
@@ -301,12 +303,23 @@ def run_all_benchmarks(
     data_dir : str
         Directory containing the reagent/ligand/solvent *_sample.csv files.
         Only used by the reaction component selection tasks.
+    thinking : str
+        "on", "off" or "default" (keep the chat template's own behaviour).
+        Local backend only.
+    reasoning_effort : str or None
+        Passed to the chat template as `reasoning_effort` (e.g. "low",
+        "medium", "xhigh"). None keeps the template default. Local backend only.
 
     Returns
     -------
     dict[str, dict]
         Mapping from task_key to its results dict.
     """
+    import utils
+    if reasoning_effort is not None and thinking == "off":
+        print("WARNING: --reasoning-effort has no effect with --thinking off")
+    utils.set_thinking(thinking, reasoning_effort)
+
     # Resolve task list
     if tasks is None:
         tasks = ["all"]
@@ -339,6 +352,7 @@ def run_all_benchmarks(
     print(f"  Model    : {model_name}")
     print(f"  Backend  : {backend}")
     print(f"  Strategy : {sample_strategy} (k={k})")
+    print(f"  Thinking : {thinking} (effort={reasoning_effort or 'template default'})")
     print(f"  Data dir : {data_dir}")
     print(f"  Tasks    : {', '.join(task_keys)}")
     print(f"{'═' * 70}")
@@ -385,6 +399,9 @@ def run_all_benchmarks(
         "sample_strategy": sample_strategy,
         "k": k,
         "temperature": temperature,
+        "max_new_tokens": max_new_tokens,
+        "thinking": thinking,
+        "reasoning_effort": reasoning_effort,
         "data_dir": data_dir,
         "timestamp": timestamp,
         "tasks": {
@@ -453,6 +470,14 @@ def main():
                         help="vLLM: disable CUDA graphs (slower, uses less memory).")
     parser.add_argument("--api-concurrency", type=int, default=8,
                         help="API backend: number of concurrent requests.")
+    parser.add_argument("--thinking", type=str, default="default",
+                        choices=["default", "on", "off"],
+                        help="Local models: enable/disable reasoning via the chat "
+                             "template (default: template's own behaviour).")
+    parser.add_argument("--reasoning-effort", type=str, default=None,
+                        choices=["low", "medium", "xhigh"],
+                        help="Local models: reasoning_effort chat-template variable "
+                             "(default: template's own default).")
 
     args = parser.parse_args()
 
@@ -475,6 +500,8 @@ def main():
         max_new_tokens=args.max_new_tokens,
         output_dir=args.output_dir,
         data_dir=args.data_dir,
+        thinking=args.thinking,
+        reasoning_effort=args.reasoning_effort,
     )
 
 

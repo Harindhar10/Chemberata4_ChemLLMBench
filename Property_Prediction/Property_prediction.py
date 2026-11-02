@@ -50,6 +50,8 @@ def _parse_prediction(raw_text, dataset_name):
 
     text = raw_text.strip()
     text = strip_thinking(text)
+    if not text:
+        return -1
     ans = extract_json_answer(text)
 
     if ans is not None:
@@ -58,7 +60,6 @@ def _parse_prediction(raw_text, dataset_name):
             return 1 if m.group(1) == "yes" else 0
 
     task_key = TASK_DESCRIPTION[dataset_name]
-    text = raw_text.strip()
 
     # Try to find "<TaskKey>: Yes/No" pattern first
     pattern = re.compile(

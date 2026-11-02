@@ -59,6 +59,8 @@ def _parse_prediction(raw_text, task):
         return ""
 
     text = strip_thinking(text)
+    if not text:
+        return ""
     ans = extract_json_answer(text, key="answer")
 
     if ans:

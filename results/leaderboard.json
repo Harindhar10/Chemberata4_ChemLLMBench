@@ -1,0 +1,230 @@
+{
+  "Inferact_Qwen3.8-Flash-Next-NVFP4_random_k8_think-on_tok16384_temp0": {
+    "config": {
+      "model": "Inferact/Qwen3.8-Flash-Next-NVFP4",
+      "backend": "local",
+      "sample_strategy": "random",
+      "k": 8,
+      "thinking": "on",
+      "reasoning_effort": null,
+      "max_new_tokens": 16384,
+      "temperature": 0.0
+    },
+    "tasks": {
+      "bbbp": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.77,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.77,
+          "f1": 0.8296296296296296,
+          "total": 100,
+          "valid_predictions": 96,
+          "invalid_predictions": 4
+        },
+        "updated": "2026-11-03T14:58:59"
+      }
+    }
+  },
+  "Inferact_Qwen3.8-Flash-Next-NVFP4_random_k8_think-off_tok1024_temp0": {
+    "config": {
+      "model": "Inferact/Qwen3.8-Flash-Next-NVFP4",
+      "backend": "local",
+      "sample_strategy": "random",
+      "k": 8,
+      "thinking": "off",
+      "reasoning_effort": null,
+      "max_new_tokens": 1024,
+      "temperature": 0.0
+    },
+    "tasks": {
+      "bbbp": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.82,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.82,
+          "f1": 0.8732394366197183,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T15:33:52"
+      },
+      "smiles_to_iupac": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.01,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "smiles2iupac",
+          "accuracy": 0.01,
+          "correct": 1,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:33:21"
+      },
+      "iupac_to_smiles": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.12,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "iupac2smiles",
+          "accuracy": 0.12,
+          "correct": 12,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:33:38"
+      },
+      "smiles_to_formula": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.17,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "smiles2formula",
+          "accuracy": 0.17,
+          "correct": 17,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:33:43"
+      },
+      "iupac_to_formula": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.28,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "iupac2formula",
+          "accuracy": 0.28,
+          "correct": 28,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:33:50"
+      },
+      "bace": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.58,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.58,
+          "f1": 0.625,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T15:34:01"
+      },
+      "tox21": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.64,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.64,
+          "f1": 0.25,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T15:34:07"
+      },
+      "hiv": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.94,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.94,
+          "f1": 0.0,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T15:34:26"
+      },
+      "clintox": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.83,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.83,
+          "f1": 0.32,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T15:34:33"
+      },
+      "reaction_prediction": {
+        "status": "success",
+        "metric": "top1_accuracy",
+        "score": 0.19,
+        "invalid_smiles_percent": 3.0,
+        "metrics": {
+          "top1_accuracy": 0.19,
+          "invalid_smiles_percent": 3.0,
+          "correct": 19,
+          "invalid": 3,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:35:15"
+      },
+      "reactant_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.52,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.52,
+          "correct": 52,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:35:18"
+      },
+      "ligand_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.07,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.07,
+          "correct": 7,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:35:25"
+      },
+      "solvent_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.28,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.28,
+          "correct": 28,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:35:28"
+      },
+      "retrosynthesis": {
+        "status": "success",
+        "metric": "top1_accuracy",
+        "score": 0.04,
+        "invalid_smiles_percent": 1.0,
+        "metrics": {
+          "top1_accuracy": 0.04,
+          "invalid_smiles_percent": 1.0,
+          "correct": 4,
+          "invalid": 1,
+          "total": 100
+        },
+        "updated": "2026-11-03T15:37:05"
+      }
+    }
+  }
+}

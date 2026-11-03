@@ -1,0 +1,3 @@
+model,backend,sample_strategy,k,thinking,reasoning_effort,max_new_tokens,temperature,smiles_to_iupac (accuracy),iupac_to_smiles (accuracy),smiles_to_formula (accuracy),iupac_to_formula (accuracy),bbbp (accuracy),bace (accuracy),tox21 (accuracy),hiv (accuracy),clintox (accuracy),reaction_prediction (top1_accuracy),reactant_selection (accuracy),ligand_selection (accuracy),solvent_selection (accuracy),retrosynthesis (top1_accuracy)
+Inferact/Qwen3.8-Flash-Next-NVFP4,local,random,8,off,,1024,0.0,0.01,0.12,0.17,0.28,0.82,0.58,0.64,0.94,0.83,0.19,0.52,0.07,0.28,0.04
+Inferact/Qwen3.8-Flash-Next-NVFP4,local,random,8,on,,16384,0.0,,,,,0.77,,,,,,,,,

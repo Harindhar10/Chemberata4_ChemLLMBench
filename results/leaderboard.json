@@ -226,5 +226,527 @@
         "updated": "2026-11-03T15:37:05"
       }
     }
+  },
+  "Inferact_Qwen3.8-Flash-Next-NVFP4_random_k0_think-off_tok1024_temp0": {
+    "config": {
+      "model": "Inferact/Qwen3.8-Flash-Next-NVFP4",
+      "backend": "local",
+      "sample_strategy": "random",
+      "k": 0,
+      "thinking": "off",
+      "reasoning_effort": null,
+      "max_new_tokens": 1024,
+      "temperature": 0.0
+    },
+    "tasks": {
+      "smiles_to_iupac": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.01,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "smiles2iupac",
+          "accuracy": 0.01,
+          "correct": 1,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:09"
+      },
+      "iupac_to_smiles": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.11,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "iupac2smiles",
+          "accuracy": 0.11,
+          "correct": 11,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:10"
+      },
+      "smiles_to_formula": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.11,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "smiles2formula",
+          "accuracy": 0.11,
+          "correct": 11,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:10"
+      },
+      "iupac_to_formula": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.29,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "iupac2formula",
+          "accuracy": 0.29,
+          "correct": 29,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:10"
+      },
+      "bbbp": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.58,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.58,
+          "f1": 0.6379310344827587,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:04:12"
+      },
+      "bace": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.6,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.6,
+          "f1": 0.6923076923076923,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:04:14"
+      },
+      "tox21": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.5,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.5,
+          "f1": 0.34210526315789475,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:04:17"
+      },
+      "hiv": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.87,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.87,
+          "f1": 0.0,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:04:31"
+      },
+      "clintox": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.62,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.62,
+          "f1": 0.09523809523809523,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:04:32"
+      },
+      "reaction_prediction": {
+        "status": "success",
+        "metric": "top1_accuracy",
+        "score": 0.15,
+        "invalid_smiles_percent": 5.0,
+        "metrics": {
+          "top1_accuracy": 0.15,
+          "invalid_smiles_percent": 5.0,
+          "correct": 15,
+          "invalid": 5,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:37"
+      },
+      "reactant_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.52,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.52,
+          "correct": 52,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:37"
+      },
+      "ligand_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.07,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.07,
+          "correct": 7,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:37"
+      },
+      "solvent_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.28,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.28,
+          "correct": 28,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:04:37"
+      },
+      "retrosynthesis": {
+        "status": "success",
+        "metric": "top1_accuracy",
+        "score": 0.02,
+        "invalid_smiles_percent": 9.0,
+        "metrics": {
+          "top1_accuracy": 0.02,
+          "invalid_smiles_percent": 9.0,
+          "correct": 2,
+          "invalid": 9,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:05:56"
+      },
+      "mol_caption": {
+        "status": "success",
+        "metric": "bleu4",
+        "score": 0.03024732508869878,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "bleu2": 0.09435558752621818,
+          "bleu4": 0.03024732508869878,
+          "rouge1": 0.2802662060314533,
+          "rouge2": 0.0802869524539856,
+          "rougeL": 0.18197415387163268,
+          "meteor": 0.2637929378926908,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:06:46"
+      },
+      "mol_design": {
+        "status": "success",
+        "metric": "exact",
+        "score": 0.12,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "bleu": 0.24133186114687338,
+          "exact": 0.12,
+          "levenshtein": 159.75,
+          "validity": 0.82,
+          "maccs_fts": 0.8492507000729087,
+          "rdk_fts": 0.6596964416739931,
+          "morgan_fts": 0.5912986655427448,
+          "fcd": NaN,
+          "valid_predictions": 82,
+          "total": 100
+        },
+        "updated": "2026-11-03T16:07:25"
+      },
+      "Buchwald-Hartwig": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.2,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.2,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:07:30"
+      },
+      "Suzuki-Miyaura": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.21,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.21,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T16:07:33"
+      }
+    }
+  },
+  "Inferact_Qwen3.8-Flash-Next-NVFP4_random_k10_think-off_tok1024_temp0": {
+    "config": {
+      "model": "Inferact/Qwen3.8-Flash-Next-NVFP4",
+      "backend": "local",
+      "sample_strategy": "random",
+      "k": 10,
+      "thinking": "off",
+      "reasoning_effort": null,
+      "max_new_tokens": 1024,
+      "temperature": 0.0
+    },
+    "tasks": {
+      "smiles_to_iupac": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.02,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "smiles2iupac",
+          "accuracy": 0.02,
+          "correct": 2,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:00:41"
+      },
+      "iupac_to_smiles": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.07,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "iupac2smiles",
+          "accuracy": 0.07,
+          "correct": 7,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:01:00"
+      },
+      "smiles_to_formula": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.22,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "smiles2formula",
+          "accuracy": 0.22,
+          "correct": 22,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:01:06"
+      },
+      "iupac_to_formula": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.33,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "task": "iupac2formula",
+          "accuracy": 0.33,
+          "correct": 33,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:01:14"
+      },
+      "bbbp": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.76,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.76,
+          "f1": 0.8208955223880597,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:01:25"
+      },
+      "bace": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.56,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.56,
+          "f1": 0.5686274509803921,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:02:02"
+      },
+      "tox21": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.62,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.62,
+          "f1": 0.24,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:02:09"
+      },
+      "hiv": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.95,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.95,
+          "f1": 0.0,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:02:30"
+      },
+      "clintox": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.91,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.91,
+          "f1": 0.4,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:02:39"
+      },
+      "reaction_prediction": {
+        "status": "success",
+        "metric": "top1_accuracy",
+        "score": 0.17,
+        "invalid_smiles_percent": 3.0,
+        "metrics": {
+          "top1_accuracy": 0.17,
+          "invalid_smiles_percent": 3.0,
+          "correct": 17,
+          "invalid": 3,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:02:55"
+      },
+      "reactant_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.52,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.52,
+          "correct": 52,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:02:56"
+      },
+      "ligand_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.07,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.07,
+          "correct": 7,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:02:56"
+      },
+      "solvent_selection": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.28,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.28,
+          "correct": 28,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:02:56"
+      },
+      "retrosynthesis": {
+        "status": "success",
+        "metric": "top1_accuracy",
+        "score": 0.04,
+        "invalid_smiles_percent": 9.0,
+        "metrics": {
+          "top1_accuracy": 0.04,
+          "invalid_smiles_percent": 9.0,
+          "correct": 4,
+          "invalid": 9,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:04:25"
+      },
+      "mol_caption": {
+        "status": "success",
+        "metric": "bleu4",
+        "score": 0.1271269594587123,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "bleu2": 0.2356991791708071,
+          "bleu4": 0.1271269594587123,
+          "rouge1": 0.43536669698209635,
+          "rouge2": 0.20993839910245088,
+          "rougeL": 0.33543722933252584,
+          "meteor": 0.3622986789838988,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:05:29"
+      },
+      "mol_design": {
+        "status": "success",
+        "metric": "exact",
+        "score": 0.12,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "bleu": 0.3297863639321283,
+          "exact": 0.12,
+          "levenshtein": 119.13,
+          "validity": 0.84,
+          "maccs_fts": 0.8675893671601377,
+          "rdk_fts": 0.6834355768048219,
+          "morgan_fts": 0.6194059130086045,
+          "fcd": NaN,
+          "valid_predictions": 84,
+          "total": 100
+        },
+        "updated": "2026-11-03T17:06:24"
+      },
+      "Buchwald-Hartwig": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.79,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.79,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:06:43"
+      },
+      "Suzuki-Miyaura": {
+        "status": "success",
+        "metric": "accuracy",
+        "score": 0.78,
+        "invalid_smiles_percent": null,
+        "metrics": {
+          "accuracy": 0.78,
+          "total": 100,
+          "valid_predictions": 100,
+          "invalid_predictions": 0
+        },
+        "updated": "2026-11-03T17:06:58"
+      }
+    }
   }
 }

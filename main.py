@@ -570,6 +570,19 @@ def main():
                         help="vLLM: max context length (default: model's own limit).")
     parser.add_argument("--enforce-eager", action="store_true",
                         help="vLLM: disable CUDA graphs (slower, uses less memory).")
+    parser.add_argument("--tensor-parallel-size", type=int, default=None,
+                        help="vLLM: number of GPUs to shard the model across.")
+    parser.add_argument("--max-num-batched-tokens", type=int, default=None,
+                        help="vLLM: max tokens scheduled per engine step.")
+    parser.add_argument("--enable-prefix-caching", action="store_true", default=None,
+                        help="vLLM: reuse KV cache across prompts sharing a prefix.")
+    parser.add_argument("--kv-cache-dtype", type=str, default=None,
+                        help="vLLM: KV cache dtype (e.g. fp8).")
+    parser.add_argument("--moe-backend", type=str, default=None,
+                        help="vLLM: MoE kernel backend (e.g. marlin).")
+    parser.add_argument("--attention-config.indexer_kv_dtype", dest="indexer_kv_dtype",
+                        type=str, default=None,
+                        help="vLLM: attention_config.indexer_kv_dtype (e.g. fp8).")
     parser.add_argument("--api-concurrency", type=int, default=8,
                         help="API backend: number of concurrent requests.")
     parser.add_argument("--thinking", type=str, default="default",
@@ -589,6 +602,14 @@ def main():
         gpu_memory_utilization=args.gpu_memory_utilization,
         max_model_len=args.max_model_len,
         enforce_eager=args.enforce_eager,
+        tensor_parallel_size=args.tensor_parallel_size,
+        max_num_batched_tokens=args.max_num_batched_tokens,
+        enable_prefix_caching=args.enable_prefix_caching,
+        kv_cache_dtype=args.kv_cache_dtype,
+        moe_backend=args.moe_backend,
+        attention_config=(
+            {"indexer_kv_dtype": args.indexer_kv_dtype} if args.indexer_kv_dtype else None
+        ),
     )
     utils.set_api_concurrency(args.api_concurrency)
 

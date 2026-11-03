@@ -49,6 +49,12 @@ VLLM_ENGINE_ARGS = {
     "max_model_len": None,
     "trust_remote_code": True,
     "enforce_eager": False,
+    "tensor_parallel_size": None,
+    "max_num_batched_tokens": None,
+    "enable_prefix_caching": None,
+    "kv_cache_dtype": None,
+    "moe_backend": None,
+    "attention_config": None,
 }
 
 # Number of concurrent requests LiteLLMModel.generate_batch sends to the API.

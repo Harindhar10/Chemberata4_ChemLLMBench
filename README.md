@@ -244,6 +244,26 @@ python main.py \
     --temperature 0.0
 ```
 
+#### Run a large MoE model across 4 GPUs (vLLM engine args mirror `vllm serve` flags):
+```bash
+export VLLM_USE_RUST_FRONTEND=1
+python main.py \
+    --model Inferact/Qwen3.8-Flash-Next-NVFP4 \
+    --backend local \
+    --tasks all \
+    --max-num-seqs 16 \
+    --gpu-memory-utilization 0.95 \
+    --max-num-batched-tokens 8192 \
+    --enable-prefix-caching \
+    --moe-backend marlin \
+    --tensor-parallel-size 4 \
+    --kv-cache-dtype fp8 \
+    --attention-config.indexer_kv_dtype fp8 \
+    --thinking on \
+    --max-new-tokens 16384
+```
+There is no in-process equivalent of `--reasoning-parser`; `<think>` blocks in the raw output are removed by `strip_thinking` before scoring.
+
 ---
 
 ### 2. Running Specific Task Groups
@@ -415,6 +435,14 @@ print("Accuracy:", results["metrics"]["accuracy"])
 | `--max-new-tokens`| `int` | `256` | Maximum new tokens to generate |
 | `--output-dir`| `str` | `results`| Directory to store result files and summaries |
 | `--data-dir` | `str` | `.` | Directory containing `*_sample.csv` files (for reaction selection) |
+| `--max-num-seqs` | `int` | `256` | vLLM: max sequences decoded concurrently |
+| `--gpu-memory-utilization` | `float` | `0.90` | vLLM: fraction of GPU memory the engine may use |
+| `--max-num-batched-tokens` | `int` | vLLM default | vLLM: max tokens scheduled per step |
+| `--enable-prefix-caching` | flag | vLLM default | vLLM: reuse KV cache for shared prompt prefixes |
+| `--tensor-parallel-size` | `int` | vLLM default | vLLM: number of GPUs to shard across |
+| `--kv-cache-dtype` | `str` | vLLM default | vLLM: KV cache dtype (e.g. `fp8`) |
+| `--moe-backend` | `str` | vLLM default | vLLM: MoE kernel backend (e.g. `marlin`) |
+| `--attention-config.indexer_kv_dtype` | `str` | vLLM default | vLLM: `attention_config={"indexer_kv_dtype": ...}` |
 
 ---
 

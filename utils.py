@@ -62,6 +62,18 @@ def set_vllm_engine_args(**kwargs):
     VLLM_ENGINE_ARGS.update(kwargs)
 
 
+def get_engine(model_name):
+    """(tokenizer, LLM) for model_name, started on first use and shared afterwards."""
+    if model_name not in _ENGINE_CACHE:
+        engine_args = {k: v for k, v in VLLM_ENGINE_ARGS.items() if v is not None}
+        print(f"[*] Loading vLLM engine for {model_name} with {engine_args}")
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=engine_args.get("trust_remote_code", True)
+        )
+        _ENGINE_CACHE[model_name] = (tokenizer, LLM(model=model_name, **engine_args))
+    return _ENGINE_CACHE[model_name]
+
+
 def set_api_concurrency(concurrency):
     global API_CONCURRENCY
     API_CONCURRENCY = max(1, int(concurrency))
@@ -294,14 +306,7 @@ class HuggingFaceModel(ModelInterface):
         self._warned_no_template = False
         self.last_truncated = 0
 
-        if model_name not in _ENGINE_CACHE:
-            engine_args = {k: v for k, v in VLLM_ENGINE_ARGS.items() if v is not None}
-            print(f"[*] Loading vLLM engine for {model_name} with {engine_args}")
-            tokenizer = AutoTokenizer.from_pretrained(
-                model_name, trust_remote_code=engine_args.get("trust_remote_code", True)
-            )
-            _ENGINE_CACHE[model_name] = (tokenizer, LLM(model=model_name, **engine_args))
-        self.tokenizer, self.llm = _ENGINE_CACHE[model_name]
+        self.tokenizer, self.llm = get_engine(model_name)
 
 
 

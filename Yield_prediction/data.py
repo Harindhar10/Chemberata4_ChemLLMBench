@@ -66,12 +66,18 @@ def _extract_npz_to_df(file_path, split):
     npz = np.load(file_path, allow_pickle=True)
 
     if split == "train":
-        data = npz['data'][2]
-        df = pd.DataFrame(data)
-        df.rename(columns={"yld": "yeild", "rsmi": "reaction"}, inplace=True)
-        cols = list(df.columns)
-        cols[0], cols[1] = cols[1], cols[0]
-        df = df[cols]
+        if "data" in npz.files:  # Buchwald-Hartwig format
+            data = npz['data'][2]
+            df = pd.DataFrame(data)
+            df.rename(columns={"yld": "yeild", "rsmi": "reaction"}, inplace=True)
+            cols = list(df.columns)
+            cols[0], cols[1] = cols[1], cols[0]
+            df = df[cols]
+        elif "data_df" in npz.files:  # Suzuki-Miyaura format: (reaction, numeric yield)
+            data = npz['data_df']
+            df = pd.DataFrame({"reaction": data[:, 0], "yeild": data[:, 1].astype(float)})
+        else:
+            raise KeyError(f"'{file_path}' has neither 'data' nor 'data_df'; found {npz.files}")
         df['yeild'] = np.where(df['yeild'] > 70, 'Yes', 'No')
         return df
     else:

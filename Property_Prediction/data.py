@@ -7,7 +7,7 @@ BACE_prompt = "You are an expert chemist, your task is to predict the property o
 Tox21_prompt = "You are an expert chemist, your task is to predict the property of molecule using your experienced chemical property prediction knowledge.\n\
 Please strictly follow the format, no other information can be provided. Given the SMILES string of a molecule, the task focuses on predicting molecular properties, specifically wether a molecule is toxic(Yes) or Not toxic(No), based on the SMILES string representation of each molecule. A template will be provided. The task is to predict the binary label for a given molecule SMILES, please answer with only Yes or No. Wrap your response in JSON: {\"answer\": \"<Yes/No>\"}.\n"
 
-HIV_prompt = "You are an expert chemist, your task is to predict the property of molecule using your experienced chemical property prediction knowledge. Please strictly follow the format, no other information can be provided. Given the SMILES string of a molecule, the task focuses on predicting molecular properties, specifically inhibit of HIV replication based on the SMILES string representation of each molecule. You will be provided with several examples molecules, each accompanied by a binary label indicating whether a molecule can inhibit (Yes) or cannot inhibit (No) HIV replication. Additionally, the activity test results of the molecules are provided. There are three classes of the activity test: 1). CA: confirmed active, 2). CM: Confirmed moderately active 3.) CI: Confirmed inactive. The task is to precisely predict the binary label for a given molecule and its HIV activity test, considering its properties and its potential to impede HIV replication.\n"
+HIV_prompt = "You are an expert chemist, your task is to predict the property of molecule using your experienced chemical property prediction knowledge. Please strictly follow the format, no other information can be provided. Given the SMILES string of a molecule, the task focuses on predicting molecular properties, specifically inhibit of HIV replication based on the SMILES string representation of each molecule. You will be provided with several examples molecules, each accompanied by a binary label indicating whether a molecule can inhibit (Yes) or cannot inhibit (No) HIV replication. The task is to precisely predict the binary label for a given molecule, considering its properties and its potential to impede HIV replication, please answer with only Yes or No. Wrap your response in JSON: {\"answer\": \"<Yes/No>\"}.\n"
 
 ClinTox_prompt = "You are an expert chemist, your task is to predict the property of molecule using your experienced chemical property prediction knowledge.\n\
 Please strictly follow the format, no other information can be provided. Given the SMILES string of a molecule, the task focuses on predicting molecular properties, specifically wether a molecule is Clinically-trail-Toxic(Yes) or Not Clinically-trail-toxic (No) based on the SMILES string representation of each molecule.. The FDA-approved status will specify if the drug is approved by the FDA for clinical trials(Yes) or Not approved by the FDA for clinical trials(No). You will be provided with task template. The task is to predict the binary label for a given molecule, please answer with only Yes or No. Wrap your response in JSON: {\"answer\": \"<Yes/No>\"}.\n"
@@ -109,8 +109,8 @@ def _filter_smiles(df):
 def _format_examples(rows, name):
     """Turn df rows into a list of example tuples.
     - ClinTox: (smiles, label, fda_label)
-    - HIV:     (smiles, label, activity)
     - Others:  (smiles, label)
+    HIV's activity class (CI/CM/CA) is deliberately left out: it defines HIV_active.
     """
     label_col = LABEL_COL_MAP[name]
     labels = ["Yes" if c == 1 else "No" for c in rows[label_col]]
@@ -118,9 +118,6 @@ def _format_examples(rows, name):
     if name == "ClinTox":
         fda_labels = ["Yes" if c == 1 else "No" for c in rows["FDA_APPROVED"]]
         return list(zip(rows["smiles"], labels, fda_labels))
-    elif name == "HIV":
-        activities = rows["activity"].tolist()
-        return list(zip(rows["smiles"], labels, activities))
     else:
         return list(zip(rows["smiles"], labels))
 
@@ -164,11 +161,6 @@ def _build_system_prompt(name, examples):
             f"SMILES: {smiles}\nFDA-approved: {fda}\n{TASK_DESCRIPTION[name]}: {label}"
             for smiles, label, fda in examples
         )
-    elif name == "HIV":
-        system_prompt += "\n" + "\n".join(
-            f"SMILES: {smiles}\nActivity test result: {activity}\n{TASK_DESCRIPTION[name]}: {label}"
-            for smiles, label, activity in examples
-        )
     else:
         system_prompt += "\n" + "\n".join(
             f"SMILES: {smiles}\n{TASK_DESCRIPTION[name]}: {label}"
@@ -187,12 +179,6 @@ def _create_prompt(sample_strategy, df_train, df_test, name, k):
         user_prompts = [
             f"SMILES: {s}\nFDA-approved: {fda}\n{TASK_DESCRIPTION[name]}:"
             for s, fda in zip(test_smiles, fda_labels)
-        ]
-    elif name == "HIV":
-        activities = df_test["activity"].tolist()
-        user_prompts = [
-            f"SMILES: {s}\nActivity test result: {act}\n{TASK_DESCRIPTION[name]}:"
-            for s, act in zip(test_smiles, activities)
         ]
     else:
         user_prompts = [f"SMILES: {s}\n{TASK_DESCRIPTION[name]}:" for s in test_smiles]

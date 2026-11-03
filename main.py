@@ -165,12 +165,12 @@ TASK_GROUPS = {
     "all": list(TASK_REGISTRY.keys()),
     "name_prediction": [
         "smiles_to_iupac", "iupac_to_smiles",
-        "smiles_to_formula", "formula_to_smiles",
+        "smiles_to_formula", "iupac_to_formula",
     ],
     "property_prediction": ["bbbp", "bace", "tox21", "hiv", "clintox"],
     "reaction_prediction": ["reaction_prediction"],
     "reaction_component_selection": [
-        "reagent_selection", "ligand_selection", "solvent_selection",
+        "reactant_selection", "ligand_selection", "solvent_selection",
     ],
     "retrosynthesis": ["retrosynthesis"],
     "molecule_design": ["mol_caption", "mol_design"],
@@ -399,13 +399,15 @@ def run_all_benchmarks(
     if tasks is None:
         tasks = ["all"]
 
+    tasks_by_lower = {key.lower(): key for key in TASK_REGISTRY}
+    groups_by_lower = {key.lower(): key for key in TASK_GROUPS}
     task_keys = []
     for t in tasks:
         t_lower = t.lower()
-        if t_lower in TASK_GROUPS:
-            task_keys.extend(TASK_GROUPS[t_lower])
-        elif t_lower in TASK_REGISTRY:
-            task_keys.append(t_lower)
+        if t_lower in groups_by_lower:
+            task_keys.extend(TASK_GROUPS[groups_by_lower[t_lower]])
+        elif t_lower in tasks_by_lower:
+            task_keys.append(tasks_by_lower[t_lower])
         else:
             raise ValueError(
                 f"Unknown task or group: {t!r}. "
@@ -443,6 +445,11 @@ def run_all_benchmarks(
         "max_new_tokens": max_new_tokens,
         "temperature": temperature,
     }
+
+    # Start vLLM once for the whole run; a failed startup aborts instead of
+    # being retried by every task.
+    if backend == "local":
+        utils.get_engine(model_name)
 
     all_results = {}
     for task_key in task_keys:

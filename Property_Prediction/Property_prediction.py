@@ -36,7 +36,7 @@ from sklearn.metrics import (
 )
 
 from .data import load_dataset, LABEL_COL_MAP, TASK_DESCRIPTION
-from utils import LiteLLMModel, HuggingFaceModel ,extract_json_answer, strip_thinking
+# from utils import LiteLLMModel, HuggingFaceModel ,extract_json_answer, strip_thinking
 
 
 # ── Supported datasets ──────────────────────────────────────────────────────

@@ -183,90 +183,96 @@ def run_benchmark(
         name=dataset_name, sample_strategy=sample_strategy, k=k
     )
 
-    label_col = LABEL_COL_MAP[dataset_name]
-    y_true = df_test[label_col].astype(int).tolist()
+    print('System Prompt:', system_prompts[0])
+    print('User Prompt:', user_prompts[0])
+    
+    print('System Prompt:', system_prompts[1])
+    print('User Prompt:', user_prompts[1])
+    
+    # label_col = LABEL_COL_MAP[dataset_name]
+    # y_true = df_test[label_col].astype(int).tolist()
 
     # ── 2. Build model ───────────────────────────────────────────────────
-    print(f"[*] Initialising model: {model_name}  (backend={backend})")
-    model = _build_model(
-        backend=backend,
-        model_name=model_name,
-        temperature=temperature,
-        max_new_tokens=max_new_tokens,
-    )
+    # print(f"[*] Initialising model: {model_name}  (backend={backend})")
+    # model = _build_model(
+    #     backend=backend,
+    #     model_name=model_name,
+    #     temperature=temperature,
+    #     max_new_tokens=max_new_tokens,
+    # )
 
-    # ── 3. Run inference ─────────────────────────────────────────────────
-    raw_outputs = []
-    predictions = []
+    # # ── 3. Run inference ─────────────────────────────────────────────────
+    # raw_outputs = []
+    # predictions = []
 
-    print(f"[*] Running inference on {len(user_prompts)} molecules …")
-    for idx in tqdm(range(len(user_prompts)), desc=dataset_name):
-        sys_prompt = system_prompts[idx]
-        usr_prompt = user_prompts[idx]
+    # print(f"[*] Running inference on {len(user_prompts)} molecules …")
+    # for idx in tqdm(range(len(user_prompts)), desc=dataset_name):
+    #     sys_prompt = system_prompts[idx]
+    #     usr_prompt = user_prompts[idx]
 
         # Generate model response
-        outputs = model.generate(
-            user_prompt=usr_prompt, sys_prompt=sys_prompt,
-            n=n
-        )
+        # outputs = model.generate(
+        #     user_prompt=usr_prompt, sys_prompt=sys_prompt,
+        #     n=n
+        # )
 
-        raw_text = outputs[0] if outputs else ""
-        raw_outputs.append(raw_text)
+        # raw_text = outputs[0] if outputs else ""
+        # raw_outputs.append(raw_text)
 
-        pred = _parse_prediction(raw_text, dataset_name)
-        predictions.append(pred)
+        # pred = _parse_prediction(raw_text, dataset_name)
+        # predictions.append(pred)
 
     # ── 4. Evaluate ──────────────────────────────────────────────────────
-    print("[*] Computing metrics …")
-    metrics = _compute_metrics(y_true, predictions)
+    # print("[*] Computing metrics …")
+    # # metrics = _compute_metrics(y_true, predictions)
 
-    print(f"\n{'═' * 50}")
-    print(f"  Dataset : {dataset_name}")
-    print(f"  Model   : {model_name}")
-    print(f"  Strategy: {sample_strategy} (k={k})")
-    print(f"{'─' * 50}")
-    print(f"  Accuracy : {metrics['accuracy']:.4f}")
-    print(f"  F1       : {metrics['f1']:.4f}")
-    print(f"  Valid    : {metrics['valid_predictions']}/{metrics['total']}")
-    print(f"{'═' * 50}\n")
+    # print(f"\n{'═' * 50}")
+    # print(f"  Dataset : {dataset_name}")
+    # print(f"  Model   : {model_name}")
+    # print(f"  Strategy: {sample_strategy} (k={k})")
+    # print(f"{'─' * 50}")
+    # print(f"  Accuracy : {metrics['accuracy']:.4f}")
+    # print(f"  F1       : {metrics['f1']:.4f}")
+    # print(f"  Valid    : {metrics['valid_predictions']}/{metrics['total']}")
+    # print(f"{'═' * 50}\n")
 
-    # ── 5. Save results ──────────────────────────────────────────────────
-    os.makedirs(output_dir, exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_model = model_name.replace("/", "_").replace("\\", "_")
-    run_tag = f"{dataset_name}_{safe_model}_{sample_strategy}_k{k}_{timestamp}"
+    # # ── 5. Save results ──────────────────────────────────────────────────
+    # os.makedirs(output_dir, exist_ok=True)
+    # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # safe_model = model_name.replace("/", "_").replace("\\", "_")
+    # run_tag = f"{dataset_name}_{safe_model}_{sample_strategy}_k{k}_{timestamp}"
 
-    # Save predictions CSV
-    results_df = df_test.copy().reset_index(drop=True)
-    results_df["raw_output"] = raw_outputs
-    results_df["prediction"] = predictions
-    results_df["prediction_label"] = [
-        "Yes" if p == 1 else ("No" if p == 0 else "INVALID") for p in predictions
-    ]
-    results_df["ground_truth"] = y_true
-    csv_path = os.path.join(output_dir, f"{run_tag}_predictions.csv")
-    results_df.to_csv(csv_path, index=False)
+    # # Save predictions CSV
+    # results_df = df_test.copy().reset_index(drop=True)
+    # results_df["raw_output"] = raw_outputs
+    # results_df["prediction"] = predictions
+    # results_df["prediction_label"] = [
+    #     "Yes" if p == 1 else ("No" if p == 0 else "INVALID") for p in predictions
+    # ]
+    # results_df["ground_truth"] = y_true
+    # csv_path = os.path.join(output_dir, f"{run_tag}_predictions.csv")
+    # results_df.to_csv(csv_path, index=False)
 
-    # Save metrics JSON
-    meta = {
-        "dataset": dataset_name,
-        "model": model_name,
-        "backend": backend,
-        "sample_strategy": sample_strategy,
-        "k": k,
-        "n": n,
-        "temperature": temperature,
-        "timestamp": timestamp,
-        "metrics": metrics,
-    }
-    json_path = os.path.join(output_dir, f"{run_tag}_metrics.json")
-    with open(json_path, "w") as f:
-        json.dump(meta, f, indent=2, default=str)
+    # # Save metrics JSON
+    # meta = {
+    #     "dataset": dataset_name,
+    #     "model": model_name,
+    #     "backend": backend,
+    #     "sample_strategy": sample_strategy,
+    #     "k": k,
+    #     "n": n,
+    #     "temperature": temperature,
+    #     "timestamp": timestamp,
+    #     "metrics": metrics,
+    # }
+    # json_path = os.path.join(output_dir, f"{run_tag}_metrics.json")
+    # with open(json_path, "w") as f:
+    #     json.dump(meta, f, indent=2, default=str)
 
-    print(f"[✓] Predictions saved to: {csv_path}")
-    print(f"[✓] Metrics saved to:     {json_path}")
+    # print(f"[✓] Predictions saved to: {csv_path}")
+    # print(f"[✓] Metrics saved to:     {json_path}")
 
-    return {"metrics": metrics, "predictions": predictions, "raw_outputs": raw_outputs}
+    # return {"metrics": metrics, "predictions": predictions, "raw_outputs": raw_outputs}
 
 
 # ── CLI entry-point ──────────────────────────────────────────────────────────

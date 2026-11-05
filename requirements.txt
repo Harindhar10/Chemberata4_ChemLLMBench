@@ -16,5 +16,5 @@ Levenshtein
 rouge-score    
 nltk
 fcd
-transformers==4.49.0           
-vllm           
+# transformers==4.49.0           
+# vllm           
